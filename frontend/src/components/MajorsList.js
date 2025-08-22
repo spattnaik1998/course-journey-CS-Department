@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import FloatingChat from './FloatingChat';
 
 function MajorsList() {
   const [majors, setMajors] = useState([]);
@@ -32,6 +33,7 @@ function MajorsList() {
           </li>
         ))}
       </ul>
+      <FloatingChat />
     </div>
   );
 }

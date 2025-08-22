@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import FacultyModal from './FacultyModal';
+import FloatingChat from './FloatingChat';
 import jsPDF from 'jspdf';
 
 function CoursesList() {
@@ -245,6 +246,7 @@ function CoursesList() {
         isOpen={isModalOpen}
         onClose={closeFacultyModal}
       />
+      <FloatingChat />
     </div>
   );
 }
