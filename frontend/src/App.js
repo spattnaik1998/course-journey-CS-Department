@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MajorsList from './components/MajorsList';
 import CoursesList from './components/CoursesList';
+import Analytics from './components/Analytics';
 
 function App() {
   return (
@@ -10,6 +11,7 @@ function App() {
         <Routes>
           <Route path="/" element={<MajorsList />} />
           <Route path="/courses/:majorId" element={<CoursesList />} />
+          <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </div>
     </Router>

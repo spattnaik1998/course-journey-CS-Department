@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# In-memory view counter for analytics
+view_counts = {}
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
@@ -44,3 +47,25 @@ def get_courses(major_id: int):
         "major": major_name,
         "courses": MAJORS_DATA[major_name]
     }
+
+@app.post("/courses/{course_code}/view")
+def track_course_view(course_code: str):
+    if course_code not in view_counts:
+        view_counts[course_code] = 0
+    view_counts[course_code] += 1
+    return {"success": True, "views": view_counts[course_code]}
+
+@app.get("/analytics")
+def get_analytics():
+    # Get all course codes and their view counts
+    all_courses = []
+    for major_courses in MAJORS_DATA.values():
+        for course in major_courses:
+            course_data = {
+                "code": course["code"],
+                "name": course["name"],
+                "views": view_counts.get(course["code"], 0)
+            }
+            all_courses.append(course_data)
+    
+    return {"courses": all_courses}
