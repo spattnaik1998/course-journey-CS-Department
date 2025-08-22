@@ -37,6 +37,79 @@ MAJORS_DATA = {
     ]
 }
 
+# Faculty data for each department
+FACULTY_DATA = {
+    "Applied Machine Learning": [
+        {
+            "name": "Dr. Sarah Johnson",
+            "courses": ["CS101: Probability and Statistics"],
+            "educational_background": "PhD in Statistics, Stanford University; MS in Mathematics, MIT",
+            "email": "s.johnson@university.edu",
+            "office_hours": "Monday & Wednesday 2-4 PM"
+        },
+        {
+            "name": "Prof. Michael Chen",
+            "courses": ["CS102: Data Visualization using R"],
+            "educational_background": "PhD in Computer Science, UC Berkeley; BS in Statistics, UCLA",
+            "email": "m.chen@university.edu",
+            "office_hours": "Tuesday & Thursday 10-12 PM"
+        },
+        {
+            "name": "Dr. Emily Rodriguez",
+            "courses": ["CS103: Model Building with Regression Algorithms"],
+            "educational_background": "PhD in Machine Learning, Carnegie Mellon University; MS in Applied Mathematics, Caltech",
+            "email": "e.rodriguez@university.edu",
+            "office_hours": "Friday 1-4 PM"
+        }
+    ],
+    "Deep Learning": [
+        {
+            "name": "Prof. David Kim",
+            "courses": ["CS201: Neural Network Basics"],
+            "educational_background": "PhD in Artificial Intelligence, MIT; MS in Computer Science, Stanford",
+            "email": "d.kim@university.edu",
+            "office_hours": "Monday & Friday 9-11 AM"
+        },
+        {
+            "name": "Dr. Lisa Wang",
+            "courses": ["CS202: Transformers and Attention"],
+            "educational_background": "PhD in Natural Language Processing, Google Research; MS in Computer Science, University of Washington",
+            "email": "l.wang@university.edu",
+            "office_hours": "Wednesday 2-5 PM"
+        },
+        {
+            "name": "Prof. Alex Thompson",
+            "courses": ["CS203: Generative AI with Python"],
+            "educational_background": "PhD in Machine Learning, Oxford University; BS in Computer Science, Harvard",
+            "email": "a.thompson@university.edu",
+            "office_hours": "Tuesday & Thursday 1-3 PM"
+        }
+    ],
+    "Data Science": [
+        {
+            "name": "Dr. Rachel Green",
+            "courses": ["CS301: Data Mining"],
+            "educational_background": "PhD in Data Science, University of Chicago; MS in Statistics, Northwestern University",
+            "email": "r.green@university.edu",
+            "office_hours": "Monday & Wednesday 11 AM-1 PM"
+        },
+        {
+            "name": "Prof. James Miller",
+            "courses": ["CS302: Hypothesis Testing using t-test"],
+            "educational_background": "PhD in Biostatistics, Johns Hopkins University; MS in Applied Statistics, Columbia University",
+            "email": "j.miller@university.edu",
+            "office_hours": "Thursday 3-6 PM"
+        },
+        {
+            "name": "Dr. Maria Garcia",
+            "courses": ["CS303: Feature Engineering with R"],
+            "educational_background": "PhD in Statistical Computing, University of Texas at Austin; BS in Mathematics, Rice University",
+            "email": "m.garcia@university.edu",
+            "office_hours": "Tuesday & Friday 10 AM-12 PM"
+        }
+    ]
+}
+
 @app.get("/majors")
 def get_majors():
     return [{"id": i, "name": major} for i, major in enumerate(MAJORS_DATA.keys())]
@@ -51,6 +124,18 @@ def get_courses(major_id: int):
     return {
         "major": major_name,
         "courses": MAJORS_DATA[major_name]
+    }
+
+@app.get("/faculty/{major_id}")
+def get_faculty(major_id: int):
+    majors = list(FACULTY_DATA.keys())
+    if major_id < 0 or major_id >= len(majors):
+        raise HTTPException(status_code=404, detail="Major not found")
+    
+    major_name = majors[major_id]
+    return {
+        "major": major_name,
+        "faculty": FACULTY_DATA[major_name]
     }
 
 @app.post("/courses/{course_code}/view")

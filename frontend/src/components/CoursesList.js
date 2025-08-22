@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import FacultyModal from './FacultyModal';
 import FloatingChat from './FloatingChat';
+import Faculty from './Faculty';
 import jsPDF from 'jspdf';
 
 function CoursesList() {
@@ -13,6 +14,7 @@ function CoursesList() {
   const [modalFaculty, setModalFaculty] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState([]);
+  const [activeTab, setActiveTab] = useState('courses');
 
   useEffect(() => {
     fetch(`http://localhost:8000/courses/${majorId}`)
@@ -99,9 +101,56 @@ function CoursesList() {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '20px' }}>
-      <div style={{ flex: '2' }}>
-        <h1>Courses for {coursesData.major}</h1>
+    <div>
+      {/* Header with Department Name */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1>{coursesData.major}</h1>
+        
+        {/* Tab Navigation */}
+        <div style={{ 
+          borderBottom: '2px solid #eee',
+          marginBottom: '20px'
+        }}>
+          <button
+            onClick={() => setActiveTab('courses')}
+            style={{
+              padding: '10px 20px',
+              marginRight: '10px',
+              backgroundColor: activeTab === 'courses' ? '#007bff' : 'transparent',
+              color: activeTab === 'courses' ? 'white' : '#007bff',
+              border: '2px solid #007bff',
+              borderBottom: 'none',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: activeTab === 'courses' ? 'bold' : 'normal'
+            }}
+          >
+            Courses
+          </button>
+          <button
+            onClick={() => setActiveTab('faculty')}
+            style={{
+              padding: '10px 20px',
+              backgroundColor: activeTab === 'faculty' ? '#007bff' : 'transparent',
+              color: activeTab === 'faculty' ? 'white' : '#007bff',
+              border: '2px solid #007bff',
+              borderBottom: 'none',
+              borderRadius: '8px 8px 0 0',
+              cursor: 'pointer',
+              fontSize: '16px',
+              fontWeight: activeTab === 'faculty' ? 'bold' : 'normal'
+            }}
+          >
+            Faculty
+          </button>
+        </div>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'courses' ? (
+        <div style={{ display: 'flex', gap: '20px' }}>
+          <div style={{ flex: '2' }}>
         <input
           type="text"
           placeholder="Search courses by code or name..."
@@ -170,10 +219,6 @@ function CoursesList() {
             </div>
           ))}
         </div>
-        {filteredCourses.length === 0 && searchTerm && (
-          <p>No courses found matching "{searchTerm}"</p>
-        )}
-        <Link to="/">← Back to Majors</Link>
       </div>
 
       <div style={{ 
@@ -240,6 +285,15 @@ function CoursesList() {
           </>
         )}
       </div>
+      
+          {filteredCourses.length === 0 && searchTerm && (
+            <p>No courses found matching "{searchTerm}"</p>
+          )}
+          <Link to="/">← Back to Majors</Link>
+        </div>
+      ) : (
+        <Faculty />
+      )}
       
       <FacultyModal 
         faculty={modalFaculty}
