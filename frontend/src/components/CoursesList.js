@@ -6,6 +6,7 @@ function CoursesList() {
   const [coursesData, setCoursesData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedCourse, setExpandedCourse] = useState(null);
 
   useEffect(() => {
     fetch(`http://localhost:8000/courses/${majorId}`)
@@ -28,6 +29,10 @@ function CoursesList() {
     course.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const toggleExpanded = (courseCode) => {
+    setExpandedCourse(expandedCourse === courseCode ? null : courseCode);
+  };
+
   return (
     <div>
       <h1>Courses for {coursesData.major}</h1>
@@ -38,13 +43,31 @@ function CoursesList() {
         onChange={(e) => setSearchTerm(e.target.value)}
         style={{ marginBottom: '20px', padding: '8px', width: '300px' }}
       />
-      <ul>
+      <div>
         {filteredCourses.map(course => (
-          <li key={course.code}>
-            <strong>{course.code}:</strong> {course.name}
-          </li>
+          <div key={course.code} style={{ 
+            border: '1px solid #ccc', 
+            marginBottom: '10px', 
+            padding: '15px',
+            cursor: 'pointer',
+            backgroundColor: expandedCourse === course.code ? '#f9f9f9' : 'white'
+          }}>
+            <div onClick={() => toggleExpanded(course.code)}>
+              <strong>{course.code}:</strong> {course.name}
+              <span style={{ float: 'right', color: '#666' }}>
+                {expandedCourse === course.code ? '−' : '+'}
+              </span>
+            </div>
+            {expandedCourse === course.code && (
+              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee' }}>
+                <p><strong>Description:</strong> {course.description}</p>
+                <p><strong>Credits:</strong> {course.credits}</p>
+                <p><strong>Semester:</strong> {course.semester}</p>
+              </div>
+            )}
+          </div>
         ))}
-      </ul>
+      </div>
       {filteredCourses.length === 0 && searchTerm && (
         <p>No courses found matching "{searchTerm}"</p>
       )}

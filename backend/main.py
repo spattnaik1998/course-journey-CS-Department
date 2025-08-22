@@ -13,19 +13,19 @@ app.add_middleware(
 
 MAJORS_DATA = {
     "Applied Machine Learning": [
-        {"code": "CS101", "name": "Probability and Statistics"},
-        {"code": "CS102", "name": "Data Visualization using R"},
-        {"code": "CS103", "name": "Model Building with Regression Algorithms"}
+        {"code": "CS101", "name": "Probability and Statistics", "description": "Introduction to probability theory and statistical methods for data analysis", "credits": 3, "semester": "Fall"},
+        {"code": "CS102", "name": "Data Visualization using R", "description": "Learn to create compelling visualizations using R programming language", "credits": 3, "semester": "Spring"},
+        {"code": "CS103", "name": "Model Building with Regression Algorithms", "description": "Advanced techniques for building predictive models using various regression methods", "credits": 4, "semester": "Fall"}
     ],
     "Deep Learning": [
-        {"code": "CS201", "name": "Neural Network Basics"},
-        {"code": "CS202", "name": "Transformers and Attention"},
-        {"code": "CS203", "name": "Generative AI with Python"}
+        {"code": "CS201", "name": "Neural Network Basics", "description": "Fundamentals of neural networks including perceptrons, backpropagation, and optimization", "credits": 4, "semester": "Fall"},
+        {"code": "CS202", "name": "Transformers and Attention", "description": "Modern transformer architectures and attention mechanisms for NLP and computer vision", "credits": 4, "semester": "Spring"},
+        {"code": "CS203", "name": "Generative AI with Python", "description": "Hands-on experience with generative models including GANs, VAEs, and large language models", "credits": 3, "semester": "Summer"}
     ],
     "Data Science": [
-        {"code": "CS301", "name": "Data Mining"},
-        {"code": "CS302", "name": "Hypothesis Testing using t-test"},
-        {"code": "CS303", "name": "Feature Engineering with R"}
+        {"code": "CS301", "name": "Data Mining", "description": "Techniques for discovering patterns in large datasets using clustering, classification, and association rules", "credits": 3, "semester": "Fall"},
+        {"code": "CS302", "name": "Hypothesis Testing using t-test", "description": "Statistical hypothesis testing methods with focus on t-tests and their applications", "credits": 2, "semester": "Spring"},
+        {"code": "CS303", "name": "Feature Engineering with R", "description": "Advanced feature selection and engineering techniques using R for machine learning projects", "credits": 3, "semester": "Fall"}
     ]
 }
 
