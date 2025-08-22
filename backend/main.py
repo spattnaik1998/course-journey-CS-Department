@@ -1,10 +1,15 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI()
 
 # In-memory view counter for analytics
 view_counts = {}
+
+# Request model for chatbot
+class ChatRequest(BaseModel):
+    question: str
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,3 +74,47 @@ def get_analytics():
             all_courses.append(course_data)
     
     return {"courses": all_courses}
+
+@app.post("/assistant")
+def chatbot_assistant(request: ChatRequest):
+    question = request.question.lower()
+    keywords = question.split()
+    
+    matching_courses = []
+    
+    # Search through all courses
+    for major, courses in MAJORS_DATA.items():
+        for course in courses:
+            # Search in course name, description, and faculty name
+            searchable_text = f"{course['name']} {course['description']} {course['faculty']['name']}".lower()
+            
+            # Check if any keyword matches
+            if any(keyword in searchable_text for keyword in keywords):
+                course_info = {
+                    "major": major,
+                    "code": course["code"],
+                    "name": course["name"],
+                    "description": course["description"],
+                    "credits": course["credits"],
+                    "semester": course["semester"],
+                    "faculty": course["faculty"]["name"]
+                }
+                matching_courses.append(course_info)
+    
+    # Generate response
+    if not matching_courses:
+        response = "I couldn't find any courses matching your question. Try asking about specific topics like 'statistics', 'python', 'data', or 'neural networks'."
+    elif len(matching_courses) == 1:
+        course = matching_courses[0]
+        response = f"I found one course that matches: **{course['code']}: {course['name']}** in {course['major']}. {course['description']} It's {course['credits']} credits, offered in {course['semester']}, and taught by {course['faculty']}."
+    else:
+        response = f"I found {len(matching_courses)} courses that match your question:\n\n"
+        for course in matching_courses[:3]:  # Limit to top 3 results
+            response += f"• **{course['code']}: {course['name']}** ({course['major']}) - {course['credits']} credits, {course['semester']}\n"
+        if len(matching_courses) > 3:
+            response += f"\n...and {len(matching_courses) - 3} more courses."
+    
+    return {
+        "response": response,
+        "matching_courses": matching_courses
+    }
