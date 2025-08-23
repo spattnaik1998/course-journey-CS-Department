@@ -7,7 +7,7 @@ function MajorsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/majors')
+    fetch(`${process.env.REACT_APP_API_URL}/majors`)
       .then(response => response.json())
       .then(data => {
         setMajors(data);

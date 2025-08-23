@@ -30,7 +30,7 @@ function FloatingChat() {
     setInputText('');
 
     try {
-      const response = await fetch('http://localhost:8000/assistant', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/assistant`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

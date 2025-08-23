@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import os
 
 app = FastAPI()
 
@@ -11,9 +12,24 @@ view_counts = {}
 class ChatRequest(BaseModel):
     question: str
 
+# CORS configuration for production and development
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+allowed_origins = [
+    "http://localhost:3000",  # Local development
+    "https://localhost:3000", # Local development with HTTPS
+    FRONTEND_URL,  # Production frontend URL
+]
+
+# Add Railway.app domains to allowed origins
+if os.getenv("RAILWAY_ENVIRONMENT"):
+    allowed_origins.extend([
+        "https://*.railway.app",
+        "https://*.up.railway.app"
+    ])
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

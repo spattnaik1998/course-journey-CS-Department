@@ -7,7 +7,7 @@ function Faculty() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/faculty/${majorId}`)
+    fetch(`${process.env.REACT_APP_API_URL}/faculty/${majorId}`)
       .then(response => response.json())
       .then(data => {
         setFacultyData(data);

@@ -7,7 +7,7 @@ function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:8000/analytics')
+    fetch(`${process.env.REACT_APP_API_URL}/analytics`)
       .then(response => response.json())
       .then(data => {
         setAnalyticsData(data.courses);

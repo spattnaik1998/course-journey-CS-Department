@@ -17,7 +17,7 @@ function CoursesList() {
   const [activeTab, setActiveTab] = useState('courses');
 
   useEffect(() => {
-    fetch(`http://localhost:8000/courses/${majorId}`)
+    fetch(`${process.env.REACT_APP_API_URL}/courses/${majorId}`)
       .then(response => response.json())
       .then(data => {
         setCoursesData(data);
@@ -61,7 +61,7 @@ function CoursesList() {
     
     // Track view when course is expanded (opened)
     if (newExpandedCourse === courseCode) {
-      fetch(`http://localhost:8000/courses/${courseCode}/view`, {
+      fetch(`${process.env.REACT_APP_API_URL}/courses/${courseCode}/view`, {
         method: 'POST'
       }).catch(error => {
         console.error('Error tracking view:', error);
