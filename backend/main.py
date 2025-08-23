@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+from openai import OpenAI
 
 app = FastAPI()
 
@@ -11,6 +12,10 @@ view_counts = {}
 # Request model for chatbot
 class ChatRequest(BaseModel):
     question: str
+
+# Request model for course summarization
+class SummarizeRequest(BaseModel):
+    course_description: str
 
 # CORS configuration for production and development
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -34,6 +39,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configure OpenAI
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 MAJORS_DATA = {
     "Applied Machine Learning": [
@@ -178,8 +186,84 @@ def get_analytics():
 
 @app.post("/assistant")
 def chatbot_assistant(request: ChatRequest):
-    question = request.question.lower()
-    keywords = question.split()
+    try:
+        if not client.api_key:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+        # Prepare course database context for the AI
+        courses_context = ""
+        for major, courses in MAJORS_DATA.items():
+            courses_context += f"\n**{major} Department:**\n"
+            for course in courses:
+                courses_context += f"- {course['code']}: {course['name']} ({course['credits']} credits, {course['semester']})\n"
+                courses_context += f"  Description: {course['description']}\n"
+                courses_context += f"  Faculty: {course['faculty']['name']} ({course['faculty']['email']})\n"
+                courses_context += f"  Office Hours: {course['faculty']['office_hours']}\n\n"
+        
+        # Enhanced system prompt with course database
+        system_prompt = f"""You are an intelligent course advisor for a Computer Science Department. You help students find courses, understand requirements, and plan their academic journey.
+
+Available Courses Database:
+{courses_context}
+
+Instructions:
+- Answer questions about courses, faculty, prerequisites, and academic planning
+- Be helpful, friendly, and informative
+- When recommending courses, mention course codes, names, credits, and faculty
+- If asked about specific topics, suggest relevant courses from the database
+- For general questions, provide helpful academic guidance
+- Use markdown formatting for better readability (** for bold)
+- Keep responses concise but comprehensive
+- If you cannot find specific information in the course database, provide general academic advice"""
+
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": request.question
+                }
+            ],
+            max_tokens=400,
+            temperature=0.7
+        )
+        
+        ai_response = response.choices[0].message.content.strip()
+        
+        # Find relevant courses mentioned in the AI response for frontend highlighting
+        matching_courses = []
+        for major, courses in MAJORS_DATA.items():
+            for course in courses:
+                if (course['code'].lower() in ai_response.lower() or 
+                    course['name'].lower() in ai_response.lower()):
+                    course_info = {
+                        "major": major,
+                        "code": course["code"],
+                        "name": course["name"],
+                        "description": course["description"],
+                        "credits": course["credits"],
+                        "semester": course["semester"],
+                        "faculty": course["faculty"]["name"]
+                    }
+                    matching_courses.append(course_info)
+        
+        return {
+            "response": ai_response,
+            "matching_courses": matching_courses
+        }
+        
+    except Exception as e:
+        # Fallback to original text matching if OpenAI fails
+        return fallback_text_search(request.question)
+
+def fallback_text_search(question: str):
+    """Fallback function using original text matching if OpenAI fails"""
+    question_lower = question.lower()
+    keywords = question_lower.split()
     
     matching_courses = []
     
@@ -219,3 +303,41 @@ def chatbot_assistant(request: ChatRequest):
         "response": response,
         "matching_courses": matching_courses
     }
+
+@app.post("/summarize")
+def summarize_course(request: SummarizeRequest):
+    try:
+        if not client.api_key:
+            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an educational assistant that helps summarize course descriptions."
+                },
+                {
+                    "role": "user",
+                    "content": f"Summarize this course description in 3-4 sentences, highlighting prerequisites, key concepts, and expected learning outcomes: {request.course_description}"
+                }
+            ],
+            max_tokens=150,
+            temperature=0.7
+        )
+        
+        summary = response.choices[0].message.content.strip()
+        
+        return {"summary": summary}
+        
+    except Exception as e:
+        # Handle various OpenAI errors
+        error_message = str(e)
+        if "authentication" in error_message.lower():
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key")
+        elif "rate limit" in error_message.lower():
+            raise HTTPException(status_code=429, detail="OpenAI API rate limit exceeded")
+        elif "api" in error_message.lower():
+            raise HTTPException(status_code=500, detail=f"OpenAI API error: {error_message}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Error generating summary: {error_message}")
