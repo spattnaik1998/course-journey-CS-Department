@@ -17,6 +17,8 @@ function CoursesList() {
   const [activeTab, setActiveTab] = useState('courses');
   const [courseSummaries, setCourseSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState({});
+  const [courseRecommendations, setCourseRecommendations] = useState({});
+  const [loadingRecommendations, setLoadingRecommendations] = useState({});
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/courses/${majorId}`)
@@ -68,6 +70,9 @@ function CoursesList() {
       }).catch(error => {
         console.error('Error tracking view:', error);
       });
+      
+      // Fetch recommendations when course is expanded
+      fetchRecommendations(courseCode);
     }
   };
 
@@ -149,6 +154,36 @@ function CoursesList() {
       }));
     } finally {
       setLoadingSummaries(prev => ({ ...prev, [courseCode]: false }));
+    }
+  };
+
+  const fetchRecommendations = async (courseCode) => {
+    setLoadingRecommendations(prev => ({ ...prev, [courseCode]: true }));
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/recommend/${courseCode}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch recommendations');
+      }
+      
+      const data = await response.json();
+      setCourseRecommendations(prev => ({ ...prev, [courseCode]: data.recommendations }));
+      
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      setCourseRecommendations(prev => ({ ...prev, [courseCode]: [] }));
+    } finally {
+      setLoadingRecommendations(prev => ({ ...prev, [courseCode]: false }));
+    }
+  };
+
+  const handleRecommendationClick = (recommendedCourse) => {
+    // Find the course in the current courses list and expand it
+    const courseExists = filteredCourses.find(course => course.code === recommendedCourse.code);
+    if (courseExists) {
+      setExpandedCourse(recommendedCourse.code);
+      fetchRecommendations(recommendedCourse.code);
     }
   };
 
@@ -331,6 +366,56 @@ function CoursesList() {
                                     {courseSummaries[course.code]}
                                   </p>
                                 </div>
+                              )}
+                            </div>
+
+                            {/* Course Recommendations */}
+                            <div className="bg-green-50 rounded-lg p-4">
+                              <h4 className="font-medium text-gray-900 mb-3">Recommended Courses</h4>
+                              
+                              {loadingRecommendations[course.code] ? (
+                                <div className="flex items-center text-gray-600">
+                                  <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Loading recommendations...
+                                </div>
+                              ) : courseRecommendations[course.code] && courseRecommendations[course.code].length > 0 ? (
+                                <div className="space-y-2">
+                                  {courseRecommendations[course.code].map((rec, index) => (
+                                    <div key={rec.code} className="bg-white rounded-lg p-3 border border-green-200 hover:border-green-300 transition-colors">
+                                      <button
+                                        onClick={() => handleRecommendationClick(rec)}
+                                        className="w-full text-left"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <span className="text-sm font-mono bg-green-100 text-green-800 px-2 py-1 rounded mr-2">
+                                              {rec.code}
+                                            </span>
+                                            <span className="font-medium text-gray-900 hover:text-primary-600 transition-colors">
+                                              {rec.name}
+                                            </span>
+                                          </div>
+                                          <div className="text-xs text-gray-500">
+                                            {rec.major}
+                                          </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                          {rec.description}
+                                        </p>
+                                      </button>
+                                    </div>
+                                  ))}
+                                  <p className="text-xs text-gray-500 mt-2">
+                                    💡 Click on a course to see its details
+                                  </p>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-600">
+                                  No recommendations available.
+                                </p>
                               )}
                             </div>
                           </div>

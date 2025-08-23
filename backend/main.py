@@ -2,12 +2,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
+import numpy as np
 from openai import OpenAI
 
 app = FastAPI()
 
 # In-memory view counter for analytics
 view_counts = {}
+
+# In-memory storage for course embeddings
+course_embeddings = {}
 
 # Request model for chatbot
 class ChatRequest(BaseModel):
@@ -42,6 +46,56 @@ app.add_middleware(
 
 # Configure OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Functions for course recommendation system
+def get_embedding(text: str):
+    """Generate embedding for a given text using OpenAI's embedding model"""
+    try:
+        response = client.embeddings.create(
+            model="text-embedding-ada-002",
+            input=text
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        print(f"Error generating embedding: {e}")
+        return None
+
+def cosine_similarity(vec1, vec2):
+    """Calculate cosine similarity between two vectors"""
+    vec1 = np.array(vec1)
+    vec2 = np.array(vec2)
+    dot_product = np.dot(vec1, vec2)
+    norm_vec1 = np.linalg.norm(vec1)
+    norm_vec2 = np.linalg.norm(vec2)
+    
+    if norm_vec1 == 0 or norm_vec2 == 0:
+        return 0
+    
+    return dot_product / (norm_vec1 * norm_vec2)
+
+def precompute_course_embeddings():
+    """Precompute embeddings for all course descriptions"""
+    print("Precomputing course embeddings...")
+    for major, courses in MAJORS_DATA.items():
+        for course in courses:
+            course_code = course["code"]
+            # Combine course name and description for richer embeddings
+            text_to_embed = f"{course['name']} - {course['description']}"
+            embedding = get_embedding(text_to_embed)
+            if embedding:
+                course_embeddings[course_code] = {
+                    "embedding": embedding,
+                    "course_info": {
+                        "code": course_code,
+                        "name": course["name"],
+                        "description": course["description"],
+                        "major": major,
+                        "credits": course["credits"],
+                        "semester": course["semester"],
+                        "faculty": course["faculty"]["name"]
+                    }
+                }
+    print(f"Precomputed embeddings for {len(course_embeddings)} courses")
 
 MAJORS_DATA = {
     "Applied Machine Learning": [
@@ -133,6 +187,12 @@ FACULTY_DATA = {
         }
     ]
 }
+
+# Precompute embeddings when the server starts
+@app.on_event("startup")
+async def startup_event():
+    if client.api_key:  # Only precompute if OpenAI API key is available
+        precompute_course_embeddings()
 
 @app.get("/majors")
 def get_majors():
@@ -303,6 +363,56 @@ def fallback_text_search(question: str):
         "response": response,
         "matching_courses": matching_courses
     }
+
+@app.get("/recommend/{course_id}")
+def get_course_recommendations(course_id: str):
+    """Get course recommendations based on similarity to the given course"""
+    try:
+        # Check if the course exists
+        if course_id not in course_embeddings:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Get the embedding for the target course
+        target_embedding = course_embeddings[course_id]["embedding"]
+        similarities = []
+        
+        # Calculate similarity with all other courses
+        for other_course_id, course_data in course_embeddings.items():
+            if other_course_id != course_id:  # Don't recommend the same course
+                similarity = cosine_similarity(target_embedding, course_data["embedding"])
+                similarities.append({
+                    "course_id": other_course_id,
+                    "similarity": similarity,
+                    "course_info": course_data["course_info"]
+                })
+        
+        # Sort by similarity and get top 3
+        similarities.sort(key=lambda x: x["similarity"], reverse=True)
+        top_recommendations = similarities[:3]
+        
+        # Format response
+        recommendations = []
+        for rec in top_recommendations:
+            recommendations.append({
+                "code": rec["course_info"]["code"],
+                "name": rec["course_info"]["name"],
+                "description": rec["course_info"]["description"],
+                "major": rec["course_info"]["major"],
+                "credits": rec["course_info"]["credits"],
+                "semester": rec["course_info"]["semester"],
+                "faculty": rec["course_info"]["faculty"],
+                "similarity_score": round(rec["similarity"], 3)
+            })
+        
+        return {
+            "course_id": course_id,
+            "recommendations": recommendations
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating recommendations: {str(e)}")
 
 @app.post("/summarize")
 def summarize_course(request: SummarizeRequest):
