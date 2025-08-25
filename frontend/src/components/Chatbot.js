@@ -78,7 +78,7 @@ function Chatbot() {
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', padding: '20px' }}>
       <div style={{ marginBottom: '20px' }}>
         <h1>Course Assistant</h1>
-        <Link to="/">← Back to Majors</Link>
+        <Link to="/dashboard">← Back to Majors</Link>
       </div>
 
       <div style={{ 

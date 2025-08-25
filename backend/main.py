@@ -11,8 +11,6 @@ from openai import OpenAI
 
 app = FastAPI()
 
-# In-memory view counter for analytics
-view_counts = {}
 
 # In-memory storage for course embeddings
 course_embeddings = {}
@@ -48,10 +46,14 @@ class CourseRegistrationRequest(BaseModel):
 
 # CORS configuration for production and development
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+# Allow all localhost ports for development
+localhost_ports = [f"http://localhost:{port}" for port in range(3000, 3010)]
+https_localhost_ports = [f"https://localhost:{port}" for port in range(3000, 3010)]
+
 allowed_origins = [
-    "http://localhost:3000",  # Local development
-    "https://localhost:3000", # Local development with HTTPS
-    FRONTEND_URL,  # Production frontend URL
+    *localhost_ports,         # All localhost ports 3000-3009
+    *https_localhost_ports,   # All localhost HTTPS ports 3000-3009
+    FRONTEND_URL,            # Production frontend URL
 ]
 
 # Add Railway.app domains to allowed origins
@@ -304,27 +306,7 @@ def get_faculty(major_id: int):
         "faculty": FACULTY_DATA[major_name]
     }
 
-@app.post("/courses/{course_code}/view")
-def track_course_view(course_code: str):
-    if course_code not in view_counts:
-        view_counts[course_code] = 0
-    view_counts[course_code] += 1
-    return {"success": True, "views": view_counts[course_code]}
 
-@app.get("/analytics")
-def get_analytics():
-    # Get all course codes and their view counts
-    all_courses = []
-    for major_courses in MAJORS_DATA.values():
-        for course in major_courses:
-            course_data = {
-                "code": course["code"],
-                "name": course["name"],
-                "views": view_counts.get(course["code"], 0)
-            }
-            all_courses.append(course_data)
-    
-    return {"courses": all_courses}
 
 @app.post("/assistant")
 def chatbot_assistant(request: ChatRequest):

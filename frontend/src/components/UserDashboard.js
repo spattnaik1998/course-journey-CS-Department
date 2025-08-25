@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function UserDashboard() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [userRegistrations, setUserRegistrations] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchUserRegistrations = async () => {
-      const userUID = localStorage.getItem('userUID');
-      
-      if (!userUID) {
+      if (!user?.uid) {
         navigate('/login');
         return;
       }
 
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${userUID}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${user.uid}`);
         
         if (response.ok) {
           const data = await response.json();
@@ -35,18 +35,18 @@ function UserDashboard() {
     };
 
     fetchUserRegistrations();
-  }, [navigate]);
+  }, [navigate, user]);
 
   const handleLogout = () => {
-    localStorage.removeItem('userUID');
+    logout();
     navigate('/');
   };
 
   const handleClearRegistrations = async () => {
-    const userUID = localStorage.getItem('userUID');
+    if (!user?.uid) return;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${userUID}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${user.uid}`, {
         method: 'DELETE'
       });
 
@@ -121,12 +121,6 @@ function UserDashboard() {
               className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >
               Browse Programs
-            </Link>
-            <Link 
-              to="/analytics" 
-              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
-              Analytics
             </Link>
             <Link 
               to="/assistant" 
@@ -293,23 +287,6 @@ function UserDashboard() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Browse Programs</h3>
               <p className="text-gray-600 text-sm">Explore more courses and programs</p>
-            </div>
-          </Link>
-
-          <Link to="/analytics" className="group block">
-            <div className="bg-white rounded-lg shadow-md p-6 group-hover:shadow-lg group-hover:-translate-y-1 transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Course Analytics</h3>
-              <p className="text-gray-600 text-sm">View course popularity and statistics</p>
             </div>
           </Link>
 

@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
 import UserDashboard from './components/UserDashboard';
 import CoursesList from './components/CoursesList';
-import Analytics from './components/Analytics';
 import Chatbot from './components/Chatbot';
 import SignUp from './components/SignUp';
 import Login from './components/Login';
@@ -13,8 +13,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <Router>
-      <div className="App">
+    <AuthProvider>
+      <Router>
+        <div className="App">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
@@ -48,14 +49,6 @@ function App() {
             } 
           />
           <Route 
-            path="/analytics" 
-            element={
-              <ProtectedRoute>
-                <Analytics />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
             path="/assistant" 
             element={
               <ProtectedRoute>
@@ -64,8 +57,9 @@ function App() {
             } 
           />
         </Routes>
-      </div>
-    </Router>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

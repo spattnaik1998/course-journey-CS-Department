@@ -1,45 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function ProtectedRoute({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // null = checking, true = authenticated, false = not authenticated
-  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, isLoading } = useAuth();
 
-  useEffect(() => {
-    const checkAuthentication = async () => {
-      const userUID = localStorage.getItem('userUID');
-      
-      if (!userUID) {
-        setIsAuthenticated(false);
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Verify the UID is still valid by calling the welcome endpoint
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/welcome/${userUID}`);
-        
-        if (response.ok) {
-          setIsAuthenticated(true);
-        } else {
-          // Invalid UID, remove from localStorage
-          localStorage.removeItem('userUID');
-          setIsAuthenticated(false);
-        }
-      } catch (error) {
-        console.error('Authentication check failed:', error);
-        // On network error, assume not authenticated for security
-        localStorage.removeItem('userUID');
-        setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAuthentication();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
         <div className="text-center">
@@ -50,7 +16,7 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (isAuthenticated === false) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

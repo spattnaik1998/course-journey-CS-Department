@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import FacultyModal from './FacultyModal';
 import FloatingChat from './FloatingChat';
 import Faculty from './Faculty';
@@ -8,6 +9,7 @@ import jsPDF from 'jspdf';
 function CoursesList() {
   const { majorId } = useParams();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [coursesData, setCoursesData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +27,7 @@ function CoursesList() {
   const [errorMessage, setErrorMessage] = useState('');
   const [registrationLoading, setRegistrationLoading] = useState(false);
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [userHasRegisteredCourses, setUserHasRegisteredCourses] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/courses/${majorId}`)
@@ -40,6 +43,9 @@ function CoursesList() {
       
     // Fetch selected courses from backend
     fetchSelectedCourses();
+    
+    // Check if user has already registered courses
+    checkUserRegistrationStatus();
   }, [majorId]);
 
   const fetchSelectedCourses = async () => {
@@ -52,6 +58,21 @@ function CoursesList() {
       }
     } catch (error) {
       console.error('Error fetching selected courses:', error);
+    }
+  };
+
+  const checkUserRegistrationStatus = async () => {
+    if (!user?.uid) return;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${user.uid}`);
+      if (response.ok) {
+        const data = await response.json();
+        const hasRegistrations = data.registered_courses && data.registered_courses.length > 0;
+        setUserHasRegisteredCourses(hasRegistrations);
+      }
+    } catch (error) {
+      console.error('Error checking user registration status:', error);
     }
   };
 
@@ -69,7 +90,7 @@ function CoursesList() {
       <div className="text-center">
         <div className="text-red-500 text-xl mb-4">⚠️</div>
         <p className="text-gray-600 font-medium">Error loading courses</p>
-        <Link to="/" className="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+        <Link to="/dashboard" className="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
           ← Back to Majors
         </Link>
       </div>
@@ -85,15 +106,8 @@ function CoursesList() {
     const newExpandedCourse = expandedCourse === courseCode ? null : courseCode;
     setExpandedCourse(newExpandedCourse);
     
-    // Track view when course is expanded (opened)
+    // Fetch recommendations when course is expanded
     if (newExpandedCourse === courseCode) {
-      fetch(`${process.env.REACT_APP_API_URL}/courses/${courseCode}/view`, {
-        method: 'POST'
-      }).catch(error => {
-        console.error('Error tracking view:', error);
-      });
-      
-      // Fetch recommendations when course is expanded
       fetchRecommendations(courseCode);
     }
   };
@@ -109,6 +123,13 @@ function CoursesList() {
   };
 
   const addToPlan = async (course) => {
+    // Check if user has already completed registration
+    if (userHasRegisteredCourses) {
+      setErrorMessage('You have already completed your course registration. To make changes, please contact the administration.');
+      setTimeout(() => setErrorMessage(''), 8000);
+      return;
+    }
+    
     try {
       setErrorMessage(''); // Clear any previous errors
       
@@ -257,12 +278,12 @@ function CoursesList() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userUID');
+    logout();
     navigate('/');
   };
 
   const handleCompleteRegistration = async () => {
-    const userUID = localStorage.getItem('userUID');
+    const userUID = user?.uid;
     
     if (!userUID) {
       navigate('/login');
@@ -324,12 +345,6 @@ function CoursesList() {
               className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >
               My Registrations
-            </Link>
-            <Link 
-              to="/analytics" 
-              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
-            >
-              Analytics
             </Link>
             <Link 
               to="/assistant" 
@@ -460,14 +475,21 @@ function CoursesList() {
                         </div>
                         <button
                           onClick={() => addToPlan(course)}
-                          disabled={isCourseSelected(course.code)}
+                          disabled={isCourseSelected(course.code) || userHasRegisteredCourses}
                           className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
-                            isCourseSelected(course.code)
+                            (isCourseSelected(course.code) || userHasRegisteredCourses)
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : 'bg-primary-600 hover:bg-primary-700 text-white'
                           }`}
                         >
-                          {isCourseSelected(course.code) ? (
+                          {userHasRegisteredCourses ? (
+                            <>
+                              <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              Registration Complete
+                            </>
+                          ) : isCourseSelected(course.code) ? (
                             <>
                               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -618,10 +640,27 @@ function CoursesList() {
                     <svg className="w-5 h-5 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
-                    My Plan
+                    {userHasRegisteredCourses ? 'Course Information' : 'My Plan'}
                   </h3>
                   
-                  {backendSelectedCourses.length === 0 ? (
+                  {userHasRegisteredCourses ? (
+                    <div className="text-center py-8">
+                      <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Registration Complete</h4>
+                      <p className="text-gray-600 text-sm mb-4">You have already completed your course registration.</p>
+                      <p className="text-gray-500 text-xs mb-6">To modify your course selection, please contact the administration office.</p>
+                      <Link 
+                        to="/user-dashboard"
+                        className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+                      >
+                        View My Courses
+                      </Link>
+                    </div>
+                  ) : backendSelectedCourses.length === 0 ? (
                     <div className="text-center py-8">
                       <svg className="mx-auto h-8 w-8 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />

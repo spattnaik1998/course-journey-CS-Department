@@ -78,7 +78,7 @@ function LandingPage() {
               </svg>
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Data Science</h3>
-            <p className="text-gray-600">Learn data mining, hypothesis testing, and feature engineering with R and advanced analytics.</p>
+            <p className="text-gray-600">Learn data mining, hypothesis testing, and feature engineering with R and statistical methods.</p>
           </div>
         </div>
 
@@ -129,8 +129,8 @@ function LandingPage() {
                 </svg>
               </div>
               <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Real-time Analytics</h4>
-                <p className="text-gray-600">Track course popularity and make informed decisions with detailed analytics.</p>
+                <h4 className="font-semibold text-gray-900 mb-2">AI-Powered Guidance</h4>
+                <p className="text-gray-600">Get intelligent course recommendations and personalized academic planning assistance.</p>
               </div>
             </div>
           </div>

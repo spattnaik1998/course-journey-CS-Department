@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -57,8 +59,14 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store UID in localStorage for session management
-        localStorage.setItem('userUID', data.uid);
+        // Use AuthContext for login
+        const userData = {
+          uid: data.uid,
+          name: data.user_name || data.name,
+          hasRegisteredCourses: false
+        };
+        
+        login(userData);
         
         // Check if user has existing course registrations
         try {

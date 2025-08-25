@@ -33,7 +33,7 @@ function Faculty() {
       <div className="text-center">
         <div className="text-red-500 text-xl mb-4">⚠️</div>
         <p className="text-gray-600 font-medium">Error loading faculty</p>
-        <Link to="/" className="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
+        <Link to="/dashboard" className="text-primary-600 hover:text-primary-700 font-medium mt-2 inline-block">
           ← Back to Majors
         </Link>
       </div>
