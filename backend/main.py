@@ -13,6 +13,9 @@ view_counts = {}
 # In-memory storage for course embeddings
 course_embeddings = {}
 
+# In-memory storage for selected courses
+selected_courses = []
+
 # Request model for chatbot
 class ChatRequest(BaseModel):
     question: str
@@ -20,6 +23,10 @@ class ChatRequest(BaseModel):
 # Request model for course summarization
 class SummarizeRequest(BaseModel):
     course_description: str
+
+# Request model for course selection
+class CourseSelectionRequest(BaseModel):
+    course_code: str
 
 # CORS configuration for production and development
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -73,6 +80,10 @@ def cosine_similarity(vec1, vec2):
     
     return dot_product / (norm_vec1 * norm_vec2)
 
+def get_course_limit():
+    """Get the maximum course limit for a student"""
+    return 3
+
 def precompute_course_embeddings():
     """Precompute embeddings for all course descriptions"""
     print("Precomputing course embeddings...")
@@ -91,7 +102,6 @@ def precompute_course_embeddings():
                         "description": course["description"],
                         "major": major,
                         "credits": course["credits"],
-                        "semester": course["semester"],
                         "faculty": course["faculty"]["name"]
                     }
                 }
@@ -99,19 +109,19 @@ def precompute_course_embeddings():
 
 MAJORS_DATA = {
     "Applied Machine Learning": [
-        {"code": "CS101", "name": "Probability and Statistics", "description": "Introduction to probability theory and statistical methods for data analysis", "credits": 3, "semester": "Fall", "faculty": {"name": "Dr. Sarah Johnson", "email": "s.johnson@university.edu", "office_hours": "Monday & Wednesday 2-4 PM"}},
-        {"code": "CS102", "name": "Data Visualization using R", "description": "Learn to create compelling visualizations using R programming language", "credits": 3, "semester": "Spring", "faculty": {"name": "Prof. Michael Chen", "email": "m.chen@university.edu", "office_hours": "Tuesday & Thursday 10-12 PM"}},
-        {"code": "CS103", "name": "Model Building with Regression Algorithms", "description": "Advanced techniques for building predictive models using various regression methods", "credits": 4, "semester": "Fall", "faculty": {"name": "Dr. Emily Rodriguez", "email": "e.rodriguez@university.edu", "office_hours": "Friday 1-4 PM"}}
+        {"code": "CS101", "name": "Probability and Statistics", "description": "Introduction to probability theory and statistical methods for data analysis", "credits": 3, "faculty": {"name": "Dr. Sarah Johnson", "email": "s.johnson@university.edu", "office_hours": "Monday & Wednesday 2-4 PM"}},
+        {"code": "CS102", "name": "Data Visualization using R", "description": "Learn to create compelling visualizations using R programming language", "credits": 3, "faculty": {"name": "Prof. Michael Chen", "email": "m.chen@university.edu", "office_hours": "Tuesday & Thursday 10-12 PM"}},
+        {"code": "CS103", "name": "Model Building with Regression Algorithms", "description": "Advanced techniques for building predictive models using various regression methods", "credits": 4, "faculty": {"name": "Dr. Emily Rodriguez", "email": "e.rodriguez@university.edu", "office_hours": "Friday 1-4 PM"}}
     ],
     "Deep Learning": [
-        {"code": "CS201", "name": "Neural Network Basics", "description": "Fundamentals of neural networks including perceptrons, backpropagation, and optimization", "credits": 4, "semester": "Fall", "faculty": {"name": "Prof. David Kim", "email": "d.kim@university.edu", "office_hours": "Monday & Friday 9-11 AM"}},
-        {"code": "CS202", "name": "Transformers and Attention", "description": "Modern transformer architectures and attention mechanisms for NLP and computer vision", "credits": 4, "semester": "Spring", "faculty": {"name": "Dr. Lisa Wang", "email": "l.wang@university.edu", "office_hours": "Wednesday 2-5 PM"}},
-        {"code": "CS203", "name": "Generative AI with Python", "description": "Hands-on experience with generative models including GANs, VAEs, and large language models", "credits": 3, "semester": "Summer", "faculty": {"name": "Prof. Alex Thompson", "email": "a.thompson@university.edu", "office_hours": "Tuesday & Thursday 1-3 PM"}}
+        {"code": "CS201", "name": "Neural Network Basics", "description": "Fundamentals of neural networks including perceptrons, backpropagation, and optimization", "credits": 4, "faculty": {"name": "Prof. David Kim", "email": "d.kim@university.edu", "office_hours": "Monday & Friday 9-11 AM"}},
+        {"code": "CS202", "name": "Transformers and Attention", "description": "Modern transformer architectures and attention mechanisms for NLP and computer vision", "credits": 4, "faculty": {"name": "Dr. Lisa Wang", "email": "l.wang@university.edu", "office_hours": "Wednesday 2-5 PM"}},
+        {"code": "CS203", "name": "Generative AI with Python", "description": "Hands-on experience with generative models including GANs, VAEs, and large language models", "credits": 3, "faculty": {"name": "Prof. Alex Thompson", "email": "a.thompson@university.edu", "office_hours": "Tuesday & Thursday 1-3 PM"}}
     ],
     "Data Science": [
-        {"code": "CS301", "name": "Data Mining", "description": "Techniques for discovering patterns in large datasets using clustering, classification, and association rules", "credits": 3, "semester": "Fall", "faculty": {"name": "Dr. Rachel Green", "email": "r.green@university.edu", "office_hours": "Monday & Wednesday 11 AM-1 PM"}},
-        {"code": "CS302", "name": "Hypothesis Testing using t-test", "description": "Statistical hypothesis testing methods with focus on t-tests and their applications", "credits": 2, "semester": "Spring", "faculty": {"name": "Prof. James Miller", "email": "j.miller@university.edu", "office_hours": "Thursday 3-6 PM"}},
-        {"code": "CS303", "name": "Feature Engineering with R", "description": "Advanced feature selection and engineering techniques using R for machine learning projects", "credits": 3, "semester": "Fall", "faculty": {"name": "Dr. Maria Garcia", "email": "m.garcia@university.edu", "office_hours": "Tuesday & Friday 10 AM-12 PM"}}
+        {"code": "CS301", "name": "Data Mining", "description": "Techniques for discovering patterns in large datasets using clustering, classification, and association rules", "credits": 3, "faculty": {"name": "Dr. Rachel Green", "email": "r.green@university.edu", "office_hours": "Monday & Wednesday 11 AM-1 PM"}},
+        {"code": "CS302", "name": "Hypothesis Testing using t-test", "description": "Statistical hypothesis testing methods with focus on t-tests and their applications", "credits": 2, "faculty": {"name": "Prof. James Miller", "email": "j.miller@university.edu", "office_hours": "Thursday 3-6 PM"}},
+        {"code": "CS303", "name": "Feature Engineering with R", "description": "Advanced feature selection and engineering techniques using R for machine learning projects", "credits": 3, "faculty": {"name": "Dr. Maria Garcia", "email": "m.garcia@university.edu", "office_hours": "Tuesday & Friday 10 AM-12 PM"}}
     ]
 }
 
@@ -255,7 +265,7 @@ def chatbot_assistant(request: ChatRequest):
         for major, courses in MAJORS_DATA.items():
             courses_context += f"\n**{major} Department:**\n"
             for course in courses:
-                courses_context += f"- {course['code']}: {course['name']} ({course['credits']} credits, {course['semester']})\n"
+                courses_context += f"- {course['code']}: {course['name']} ({course['credits']} credits)\n"
                 courses_context += f"  Description: {course['description']}\n"
                 courses_context += f"  Faculty: {course['faculty']['name']} ({course['faculty']['email']})\n"
                 courses_context += f"  Office Hours: {course['faculty']['office_hours']}\n\n"
@@ -306,7 +316,6 @@ Instructions:
                         "name": course["name"],
                         "description": course["description"],
                         "credits": course["credits"],
-                        "semester": course["semester"],
                         "faculty": course["faculty"]["name"]
                     }
                     matching_courses.append(course_info)
@@ -341,7 +350,6 @@ def fallback_text_search(question: str):
                     "name": course["name"],
                     "description": course["description"],
                     "credits": course["credits"],
-                    "semester": course["semester"],
                     "faculty": course["faculty"]["name"]
                 }
                 matching_courses.append(course_info)
@@ -399,7 +407,6 @@ def get_course_recommendations(course_id: str):
                 "description": rec["course_info"]["description"],
                 "major": rec["course_info"]["major"],
                 "credits": rec["course_info"]["credits"],
-                "semester": rec["course_info"]["semester"],
                 "faculty": rec["course_info"]["faculty"],
                 "similarity_score": round(rec["similarity"], 3)
             })
@@ -451,3 +458,96 @@ def summarize_course(request: SummarizeRequest):
             raise HTTPException(status_code=500, detail=f"OpenAI API error: {error_message}")
         else:
             raise HTTPException(status_code=500, detail=f"Error generating summary: {error_message}")
+
+@app.post("/select-course")
+def select_course(request: CourseSelectionRequest):
+    """Add a course to the selected courses list with course limit validation"""
+    try:
+        course_code = request.course_code
+        
+        # Find the course in the database
+        course_found = None
+        
+        for major, courses in MAJORS_DATA.items():
+            for course in courses:
+                if course["code"] == course_code:
+                    course_found = course
+                    break
+            if course_found:
+                break
+        
+        if not course_found:
+            raise HTTPException(status_code=404, detail="Course not found")
+        
+        # Check if course is already selected
+        if course_code in [c["code"] for c in selected_courses]:
+            raise HTTPException(status_code=400, detail="Course is already selected")
+        
+        # Check global course limit
+        course_limit = get_course_limit()
+        
+        if len(selected_courses) >= course_limit:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"You cannot add more than {course_limit} courses."
+            )
+        
+        # Add course to selected courses
+        course_info = {
+            "code": course_found["code"],
+            "name": course_found["name"],
+            "description": course_found["description"],
+            "credits": course_found["credits"],
+            "faculty": course_found["faculty"]["name"],
+            "major": major
+        }
+        
+        selected_courses.append(course_info)
+        
+        return {
+            "success": True,
+            "message": f"Course {course_code} added successfully",
+            "selected_courses": selected_courses
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error selecting course: {str(e)}")
+
+@app.delete("/remove-course/{course_code}")
+def remove_course(course_code: str):
+    """Remove a course from the selected courses list"""
+    try:
+        # Find and remove the course
+        course_removed = False
+        
+        for i, course in enumerate(selected_courses):
+            if course["code"] == course_code:
+                selected_courses.pop(i)
+                course_removed = True
+                break
+        
+        if not course_removed:
+            raise HTTPException(status_code=404, detail="Course not found in selected courses")
+        
+        return {
+            "success": True,
+            "message": f"Course {course_code} removed successfully",
+            "selected_courses": selected_courses
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing course: {str(e)}")
+
+@app.get("/selected-courses")
+def get_selected_courses():
+    """Get the current list of selected courses"""
+    course_limit = get_course_limit()
+    return {
+        "selected_courses": selected_courses,
+        "total_courses": len(selected_courses),
+        "course_limit": course_limit
+    }

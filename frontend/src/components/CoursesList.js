@@ -19,6 +19,9 @@ function CoursesList() {
   const [loadingSummaries, setLoadingSummaries] = useState({});
   const [courseRecommendations, setCourseRecommendations] = useState({});
   const [loadingRecommendations, setLoadingRecommendations] = useState({});
+  const [backendSelectedCourses, setBackendSelectedCourses] = useState([]);
+  const [courseLimit, setCourseLimit] = useState(3);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/courses/${majorId}`)
@@ -31,7 +34,23 @@ function CoursesList() {
         console.error('Error fetching courses:', error);
         setLoading(false);
       });
+      
+    // Fetch selected courses from backend
+    fetchSelectedCourses();
   }, [majorId]);
+
+  const fetchSelectedCourses = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/selected-courses`);
+      if (response.ok) {
+        const data = await response.json();
+        setBackendSelectedCourses(data.selected_courses);
+        setCourseLimit(data.course_limit || 3);
+      }
+    } catch (error) {
+      console.error('Error fetching selected courses:', error);
+    }
+  };
 
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
@@ -86,14 +105,61 @@ function CoursesList() {
     setModalFaculty(null);
   };
 
-  const addToPlan = (course) => {
-    if (!selectedCourses.some(c => c.code === course.code)) {
-      setSelectedCourses([...selectedCourses, course]);
+  const addToPlan = async (course) => {
+    try {
+      setErrorMessage(''); // Clear any previous errors
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/select-course`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ course_code: course.code })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update local state with backend data
+        setBackendSelectedCourses(data.selected_courses);
+        setCourseLimit(data.course_limit || 3);
+        // Update old selectedCourses for backward compatibility
+        setSelectedCourses(data.selected_courses);
+      } else {
+        // Show error message from backend
+        setErrorMessage(data.detail || 'Failed to add course');
+        setTimeout(() => setErrorMessage(''), 5000); // Clear error after 5 seconds
+      }
+    } catch (error) {
+      console.error('Error adding course:', error);
+      setErrorMessage('Failed to add course. Please try again.');
+      setTimeout(() => setErrorMessage(''), 5000);
     }
   };
 
-  const removeFromPlan = (courseCode) => {
-    setSelectedCourses(selectedCourses.filter(c => c.code !== courseCode));
+  const removeFromPlan = async (courseCode) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/remove-course/${courseCode}`, {
+        method: 'DELETE'
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Update local state with backend data
+        setBackendSelectedCourses(data.selected_courses);
+        setCourseLimit(data.course_limit || 3);
+        // Update old selectedCourses for backward compatibility
+        setSelectedCourses(data.selected_courses);
+      }
+    } catch (error) {
+      console.error('Error removing course:', error);
+    }
+  };
+
+  // Helper function to check if a course is selected
+  const isCourseSelected = (courseCode) => {
+    return backendSelectedCourses.some(course => course.code === courseCode);
   };
 
   const downloadPlanAsPDF = () => {
@@ -111,9 +177,9 @@ function CoursesList() {
       doc.text(`${course.code}: ${course.name}`, 20, yPosition);
       yPosition += 10;
       doc.setFontSize(10);
-      doc.text(`Credits: ${course.credits} | Semester: ${course.semester}`, 20, yPosition);
+      doc.text(`Credits: ${course.credits}`, 20, yPosition);
       yPosition += 8;
-      doc.text(`Faculty: ${course.faculty.name}`, 20, yPosition);
+      doc.text(`Faculty: ${course.faculty}`, 20, yPosition);
       yPosition += 15;
       
       if (yPosition > 250) {
@@ -228,6 +294,18 @@ function CoursesList() {
           </div>
         </div>
 
+        {/* Error Message Display */}
+        {errorMessage && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 6.5c-.77.833-.192 2.5 1.732 2.5z" />
+              </svg>
+              {errorMessage}
+            </div>
+          </div>
+        )}
+
         {/* Tab Content */}
         {activeTab === 'courses' ? (
           <div className="flex flex-col lg:flex-row gap-6">
@@ -281,14 +359,14 @@ function CoursesList() {
                         </div>
                         <button
                           onClick={() => addToPlan(course)}
-                          disabled={selectedCourses.some(c => c.code === course.code)}
+                          disabled={isCourseSelected(course.code)}
                           className={`ml-4 px-4 py-2 rounded-lg font-medium transition-colors ${
-                            selectedCourses.some(c => c.code === course.code)
+                            isCourseSelected(course.code)
                               ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                               : 'bg-primary-600 hover:bg-primary-700 text-white'
                           }`}
                         >
-                          {selectedCourses.some(c => c.code === course.code) ? (
+                          {isCourseSelected(course.code) ? (
                             <>
                               <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -309,15 +387,9 @@ function CoursesList() {
                               <p className="text-gray-600 leading-relaxed">{course.description}</p>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className="bg-gray-50 rounded-lg p-4">
-                                <h4 className="font-medium text-gray-900 mb-1">Credits</h4>
-                                <p className="text-2xl font-bold text-primary-600">{course.credits}</p>
-                              </div>
-                              <div className="bg-gray-50 rounded-lg p-4">
-                                <h4 className="font-medium text-gray-900 mb-1">Semester</h4>
-                                <p className="text-lg font-semibold text-gray-700">{course.semester}</p>
-                              </div>
+                            <div className="bg-gray-50 rounded-lg p-4">
+                              <h4 className="font-medium text-gray-900 mb-1">Credits</h4>
+                              <p className="text-2xl font-bold text-primary-600">{course.credits}</p>
                             </div>
                             
                             <div className="bg-secondary-50 rounded-lg p-4">
@@ -448,7 +520,7 @@ function CoursesList() {
                     My Plan
                   </h3>
                   
-                  {selectedCourses.length === 0 ? (
+                  {backendSelectedCourses.length === 0 ? (
                     <div className="text-center py-8">
                       <svg className="mx-auto h-8 w-8 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -458,23 +530,36 @@ function CoursesList() {
                     </div>
                   ) : (
                     <>
-                      <div className="space-y-3 mb-4">
-                        {selectedCourses.map(course => (
-                          <div key={course.code} className="bg-gray-50 rounded-lg p-3 flex items-center justify-between">
-                            <div>
-                              <div className="font-medium text-gray-900 text-sm">{course.code}</div>
-                              <div className="text-xs text-gray-500">{course.credits} credits</div>
-                            </div>
-                            <button
-                              onClick={() => removeFromPlan(course.code)}
-                              className="text-red-500 hover:text-red-700 transition-colors p-1"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                              </svg>
-                            </button>
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-gray-900 text-sm">Selected Courses</h4>
+                          <div className={`px-2 py-1 rounded text-xs font-medium ${
+                            backendSelectedCourses.length >= courseLimit ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {backendSelectedCourses.length}/{courseLimit}
                           </div>
-                        ))}
+                        </div>
+                        <div className="space-y-2">
+                          {backendSelectedCourses.map(course => (
+                            <div key={course.code} className="bg-gray-50 rounded p-3">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-gray-900 text-sm">{course.code}</div>
+                                  <div className="text-xs text-gray-600">{course.name}</div>
+                                  <div className="text-xs text-gray-500">{course.credits} credits</div>
+                                </div>
+                                <button
+                                  onClick={() => removeFromPlan(course.code)}
+                                  className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                       
                       <div className="border-t border-gray-200 pt-4">
