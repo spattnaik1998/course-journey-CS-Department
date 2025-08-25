@@ -1,8 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import os
 import numpy as np
+import json
+import uuid
+import re
+from typing import List, Dict, Any
 from openai import OpenAI
 
 app = FastAPI()
@@ -27,6 +31,16 @@ class SummarizeRequest(BaseModel):
 # Request model for course selection
 class CourseSelectionRequest(BaseModel):
     course_code: str
+
+# Authentication models
+class SignUpRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 # CORS configuration for production and development
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
@@ -83,6 +97,43 @@ def cosine_similarity(vec1, vec2):
 def get_course_limit():
     """Get the maximum course limit for a student"""
     return 3
+
+# User management utilities
+USERS_FILE = "users.json"
+
+def load_users() -> List[Dict[str, Any]]:
+    """Load users from JSON file"""
+    try:
+        with open(USERS_FILE, "r") as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return []
+
+def save_users(users: List[Dict[str, Any]]):
+    """Save users to JSON file"""
+    with open(USERS_FILE, "w") as f:
+        json.dump(users, f, indent=2)
+
+def validate_email(email: str) -> bool:
+    """Validate email format using regex"""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def find_user_by_email(email: str) -> Dict[str, Any] or None:
+    """Find user by email"""
+    users = load_users()
+    for user in users:
+        if user["email"] == email:
+            return user
+    return None
+
+def find_user_by_uid(uid: str) -> Dict[str, Any] or None:
+    """Find user by UID"""
+    users = load_users()
+    for user in users:
+        if user["uid"] == uid:
+            return user
+    return None
 
 def precompute_course_embeddings():
     """Precompute embeddings for all course descriptions"""
@@ -551,3 +602,88 @@ def get_selected_courses():
         "total_courses": len(selected_courses),
         "course_limit": course_limit
     }
+
+# Authentication endpoints
+@app.post("/signup")
+def signup(request: SignUpRequest):
+    """Sign up a new user"""
+    try:
+        # Validation
+        if not request.name.strip():
+            raise HTTPException(status_code=400, detail="Name cannot be empty")
+        
+        if not validate_email(request.email):
+            raise HTTPException(status_code=400, detail="Invalid email format")
+        
+        if len(request.password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+        
+        # Check if email already exists
+        if find_user_by_email(request.email):
+            raise HTTPException(status_code=400, detail="Email already exists")
+        
+        # Create new user
+        users = load_users()
+        new_uid = str(uuid.uuid4())
+        
+        new_user = {
+            "uid": new_uid,
+            "name": request.name.strip(),
+            "email": request.email.lower().strip(),
+            "password": request.password  # TODO: Hash password using bcrypt or similar for production
+        }
+        
+        users.append(new_user)
+        save_users(users)
+        
+        return {
+            "success": True,
+            "message": "User created successfully",
+            "uid": new_uid
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating user: {str(e)}")
+
+@app.post("/login")
+def login(request: LoginRequest):
+    """Login user with email and password"""
+    try:
+        # Find user by email
+        user = find_user_by_email(request.email.lower().strip())
+        
+        if not user or user["password"] != request.password:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        
+        return {
+            "success": True,
+            "message": "Login successful",
+            "uid": user["uid"]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error during login: {str(e)}")
+
+@app.get("/welcome/{uid}")
+def welcome(uid: str):
+    """Get welcome message for user"""
+    try:
+        user = find_user_by_uid(uid)
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        return {
+            "message": f"Welcome, {user['name']}!",
+            "user_name": user["name"],
+            "uid": uid
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching welcome message: {str(e)}")

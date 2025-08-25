@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import FacultyModal from './FacultyModal';
 import FloatingChat from './FloatingChat';
 import Faculty from './Faculty';
@@ -7,6 +7,7 @@ import jsPDF from 'jspdf';
 
 function CoursesList() {
   const { majorId } = useParams();
+  const navigate = useNavigate();
   const [coursesData, setCoursesData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -253,9 +254,41 @@ function CoursesList() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('userUID');
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
+        {/* Navigation Header */}
+        <div className="flex justify-between items-center mb-6">
+          <Link to="/dashboard" className="text-xl font-bold text-gray-900 hover:text-primary-600 transition-colors">
+            ← CS Department
+          </Link>
+          <div className="flex items-center space-x-4">
+            <Link 
+              to="/analytics" 
+              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              Analytics
+            </Link>
+            <Link 
+              to="/assistant" 
+              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              AI Assistant
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+
         {/* Header with Department Name */}
         <div className="mb-8">
           <div className="text-center mb-6">
@@ -589,13 +622,13 @@ function CoursesList() {
         {/* Back to Majors */}
         <div className="mt-8 text-center">
           <Link 
-            to="/" 
+            to="/dashboard" 
             className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium transition-colors"
           >
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Programs
+            Back to Dashboard
           </Link>
         </div>
       </div>

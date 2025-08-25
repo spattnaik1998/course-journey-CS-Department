@@ -31,6 +31,25 @@ function MajorsList() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
+        {/* Navigation Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="text-xl font-bold text-gray-900">CS Department</div>
+          <div className="flex space-x-4">
+            <Link 
+              to="/login" 
+              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link 
+              to="/signup" 
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
