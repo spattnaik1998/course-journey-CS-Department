@@ -42,6 +42,10 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
+class CourseRegistrationRequest(BaseModel):
+    uid: str
+    courses: List[Dict[str, Any]]
+
 # CORS configuration for production and development
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 allowed_origins = [
@@ -134,6 +138,23 @@ def find_user_by_uid(uid: str) -> Dict[str, Any] or None:
         if user["uid"] == uid:
             return user
     return None
+
+def update_user_registrations(uid: str, registered_courses: List[Dict[str, Any]]) -> bool:
+    """Update user's registered courses"""
+    users = load_users()
+    for user in users:
+        if user["uid"] == uid:
+            user["registered_courses"] = registered_courses
+            save_users(users)
+            return True
+    return False
+
+def get_user_registrations(uid: str) -> List[Dict[str, Any]]:
+    """Get user's registered courses"""
+    user = find_user_by_uid(uid)
+    if user and "registered_courses" in user:
+        return user["registered_courses"]
+    return []
 
 def precompute_course_embeddings():
     """Precompute embeddings for all course descriptions"""
@@ -680,10 +701,82 @@ def welcome(uid: str):
         return {
             "message": f"Welcome, {user['name']}!",
             "user_name": user["name"],
-            "uid": uid
+            "uid": uid,
+            "has_registered_courses": len(get_user_registrations(uid)) > 0
         }
         
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching welcome message: {str(e)}")
+
+# Course Registration endpoints
+@app.post("/complete-registration")
+def complete_registration(request: CourseRegistrationRequest):
+    """Complete user's course registration"""
+    try:
+        # Verify user exists
+        user = find_user_by_uid(request.uid)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Update user's registered courses
+        success = update_user_registrations(request.uid, request.courses)
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save course registration")
+        
+        return {
+            "success": True,
+            "message": "Course registration completed successfully",
+            "registered_courses": request.courses
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error completing registration: {str(e)}")
+
+@app.get("/user-registrations/{uid}")
+def get_user_course_registrations(uid: str):
+    """Get user's registered courses"""
+    try:
+        user = find_user_by_uid(uid)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        registered_courses = get_user_registrations(uid)
+        
+        return {
+            "uid": uid,
+            "user_name": user["name"],
+            "registered_courses": registered_courses,
+            "total_courses": len(registered_courses),
+            "registration_status": "completed" if registered_courses else "pending"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching user registrations: {str(e)}")
+
+@app.delete("/user-registrations/{uid}")
+def clear_user_registrations(uid: str):
+    """Clear user's registered courses (for re-registration)"""
+    try:
+        user = find_user_by_uid(uid)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        success = update_user_registrations(uid, [])
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to clear registrations")
+        
+        return {
+            "success": True,
+            "message": "Course registrations cleared successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing registrations: {str(e)}")

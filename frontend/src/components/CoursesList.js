@@ -23,6 +23,8 @@ function CoursesList() {
   const [backendSelectedCourses, setBackendSelectedCourses] = useState([]);
   const [courseLimit, setCourseLimit] = useState(3);
   const [errorMessage, setErrorMessage] = useState('');
+  const [registrationLoading, setRegistrationLoading] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   useEffect(() => {
     fetch(`${process.env.REACT_APP_API_URL}/courses/${majorId}`)
@@ -259,6 +261,55 @@ function CoursesList() {
     navigate('/');
   };
 
+  const handleCompleteRegistration = async () => {
+    const userUID = localStorage.getItem('userUID');
+    
+    if (!userUID) {
+      navigate('/login');
+      return;
+    }
+
+    if (backendSelectedCourses.length === 0) {
+      setErrorMessage('Please select at least one course before completing registration.');
+      setTimeout(() => setErrorMessage(''), 5000);
+      return;
+    }
+
+    setRegistrationLoading(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/complete-registration`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          uid: userUID,
+          courses: backendSelectedCourses
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setRegistrationSuccess(true);
+        setTimeout(() => {
+          navigate('/user-dashboard');
+        }, 2000);
+      } else {
+        setErrorMessage(data.detail || 'Registration failed. Please try again.');
+        setTimeout(() => setErrorMessage(''), 5000);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setErrorMessage('Network error. Please try again.');
+      setTimeout(() => setErrorMessage(''), 5000);
+    } finally {
+      setRegistrationLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50">
       <div className="max-w-7xl mx-auto p-4 md:p-6">
@@ -268,6 +319,12 @@ function CoursesList() {
             ← CS Department
           </Link>
           <div className="flex items-center space-x-4">
+            <Link 
+              to="/user-dashboard" 
+              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              My Registrations
+            </Link>
             <Link 
               to="/analytics" 
               className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
@@ -327,7 +384,7 @@ function CoursesList() {
           </div>
         </div>
 
-        {/* Error Message Display */}
+        {/* Error/Success Message Display */}
         {errorMessage && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
             <div className="flex items-center">
@@ -335,6 +392,17 @@ function CoursesList() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 6.5c-.77.833-.192 2.5 1.732 2.5z" />
               </svg>
               {errorMessage}
+            </div>
+          </div>
+        )}
+
+        {registrationSuccess && (
+          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Registration completed successfully! Redirecting to your dashboard...
             </div>
           </div>
         )}
@@ -596,18 +664,46 @@ function CoursesList() {
                       </div>
                       
                       <div className="border-t border-gray-200 pt-4">
-                        <div className="text-sm text-gray-600 mb-3">
+                        <div className="text-sm text-gray-600 mb-4">
                           Total: {selectedCourses.reduce((sum, course) => sum + course.credits, 0)} credits
                         </div>
-                        <button
-                          onClick={downloadPlanAsPDF}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
-                        >
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Download PDF
-                        </button>
+                        <div className="space-y-3">
+                          <button
+                            onClick={handleCompleteRegistration}
+                            disabled={registrationLoading || backendSelectedCourses.length === 0}
+                            className={`w-full font-medium px-4 py-3 rounded-lg transition-colors flex items-center justify-center ${
+                              registrationLoading || backendSelectedCourses.length === 0
+                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                : 'bg-primary-600 hover:bg-primary-700 text-white shadow-lg'
+                            }`}
+                          >
+                            {registrationLoading ? (
+                              <>
+                                <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Completing Registration...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Complete Registration
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={downloadPlanAsPDF}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center justify-center"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Download PDF
+                          </button>
+                        </div>
                       </div>
                     </>
                   )}

@@ -67,6 +67,12 @@ function Dashboard() {
           </div>
           <div className="flex items-center space-x-4">
             <Link 
+              to="/user-dashboard" 
+              className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
+            >
+              My Registrations
+            </Link>
+            <Link 
               to="/analytics" 
               className="px-4 py-2 text-primary-600 hover:text-primary-700 font-medium transition-colors"
             >

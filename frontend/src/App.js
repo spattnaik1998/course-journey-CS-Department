@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import Dashboard from './components/Dashboard';
+import UserDashboard from './components/UserDashboard';
 import CoursesList from './components/CoursesList';
 import Analytics from './components/Analytics';
 import Chatbot from './components/Chatbot';
@@ -27,6 +28,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/user-dashboard" 
+            element={
+              <ProtectedRoute>
+                <UserDashboard />
               </ProtectedRoute>
             } 
           />

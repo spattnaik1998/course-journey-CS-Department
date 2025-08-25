@@ -59,7 +59,30 @@ function Login() {
       if (response.ok) {
         // Store UID in localStorage for session management
         localStorage.setItem('userUID', data.uid);
-        navigate('/dashboard');
+        
+        // Check if user has existing course registrations
+        try {
+          const registrationResponse = await fetch(`${process.env.REACT_APP_API_URL}/user-registrations/${data.uid}`);
+          
+          if (registrationResponse.ok) {
+            const registrationData = await registrationResponse.json();
+            
+            if (registrationData.registered_courses && registrationData.registered_courses.length > 0) {
+              // User has registered courses, go to user dashboard
+              navigate('/user-dashboard');
+            } else {
+              // New user with no registrations, go to course selection
+              navigate('/dashboard');
+            }
+          } else {
+            // Fallback to default dashboard if check fails
+            navigate('/dashboard');
+          }
+        } catch (error) {
+          console.error('Error checking registrations:', error);
+          // Fallback to default dashboard if check fails
+          navigate('/dashboard');
+        }
       } else {
         if (response.status === 401) {
           setErrors({ submit: 'Invalid email or password.' });
