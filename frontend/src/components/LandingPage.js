@@ -49,108 +49,87 @@ function LandingPage() {
           </div>
         </div>
 
-        {/* Features Section */}
+        {/* Programs Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Applied Machine Learning</h3>
-            <p className="text-gray-600">Master probability, statistics, data visualization, and regression algorithms with hands-on projects.</p>
+            <p className="text-gray-600">Master statistical foundations, data visualization, and predictive modeling techniques used in real-world applications.</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-              </svg>
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Deep Learning</h3>
-            <p className="text-gray-600">Explore neural networks, transformers, attention mechanisms, and generative AI with Python.</p>
+            <p className="text-gray-600">Dive into neural networks, transformers, and generative AI to build next-generation intelligent systems.</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
+          <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">Data Science</h3>
-            <p className="text-gray-600">Learn data mining, hypothesis testing, and feature engineering with R and statistical methods.</p>
+            <p className="text-gray-600">Extract insights from complex datasets using advanced statistical methods and feature engineering techniques.</p>
           </div>
         </div>
 
-        {/* Benefits Section */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Why Register With Us?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Expert Faculty Access</h4>
-                <p className="text-gray-600">Connect with professors from top universities like Stanford, MIT, and UC Berkeley.</p>
-              </div>
+        {/* Features Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
             </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Expert Faculty</h4>
+            <p className="text-gray-600 text-sm">Access world-class professors and their cutting-edge research insights.</p>
+          </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">AI-Powered Assistance</h4>
-                <p className="text-gray-600">Get personalized course recommendations and academic planning with our AI chatbot.</p>
-              </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="w-12 h-12 bg-secondary-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
             </div>
+            <h4 className="font-semibold text-gray-900 mb-2">AI-Powered Guidance</h4>
+            <p className="text-gray-600 text-sm">Get intelligent course recommendations and personalized academic planning assistance.</p>
+          </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">Course Planning Tools</h4>
-                <p className="text-gray-600">Build your academic plan with our intelligent course selection and PDF export tools.</p>
-              </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
             </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Flexible Learning</h4>
+            <p className="text-gray-600 text-sm">Study at your own pace with our comprehensive course planning and tracking tools.</p>
+          </div>
 
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <div>
-                <h4 className="font-semibold text-gray-900 mb-2">AI-Powered Guidance</h4>
-                <p className="text-gray-600">Get intelligent course recommendations and personalized academic planning assistance.</p>
-              </div>
+          <div className="bg-white rounded-lg shadow-md p-6 text-center">
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
             </div>
+            <h4 className="font-semibold text-gray-900 mb-2">Course Planning</h4>
+            <p className="text-gray-600 text-sm">Advanced course selection tools with PDF export and planning features.</p>
           </div>
         </div>
 
         {/* Call to Action */}
-        <div className="text-center bg-primary-600 rounded-lg p-8">
-          <h2 className="text-3xl font-bold text-white mb-4">Ready to Begin Your Journey?</h2>
-          <p className="text-primary-100 mb-6 text-lg">
-            Join thousands of students advancing their careers in Computer Science
+        <div className="text-center bg-white rounded-lg shadow-md p-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Join our computer science programs and take your skills to the next level with industry-leading curriculum and expert instruction.
           </p>
-          <Link 
-            to="/signup" 
-            className="inline-flex items-center px-8 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Register Now - It's Free
-            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link 
+              to="/signup" 
+              className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors shadow-lg"
+            >
+              Create Account
+            </Link>
+            <Link 
+              to="/login" 
+              className="px-8 py-3 border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-semibold rounded-lg transition-colors"
+            >
+              Sign In
+            </Link>
+          </div>
         </div>
       </div>
     </div>

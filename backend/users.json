@@ -4,6 +4,31 @@
     "name": "Sarthak Pattnaik",
     "email": "dps.sarthak@gmail.com",
     "password": "Sarthak_123",
-    "registered_courses": []
+    "registered_courses": [
+      {
+        "code": "CS301",
+        "name": "Data Mining",
+        "description": "Techniques for discovering patterns in large datasets using clustering, classification, and association rules",
+        "credits": 3,
+        "faculty": "Dr. Rachel Green",
+        "major": "Data Science"
+      },
+      {
+        "code": "CS201",
+        "name": "Neural Network Basics",
+        "description": "Fundamentals of neural networks including perceptrons, backpropagation, and optimization",
+        "credits": 4,
+        "faculty": "Prof. David Kim",
+        "major": "Deep Learning"
+      },
+      {
+        "code": "CS202",
+        "name": "Transformers and Attention",
+        "description": "Modern transformer architectures and attention mechanisms for NLP and computer vision",
+        "credits": 4,
+        "faculty": "Dr. Lisa Wang",
+        "major": "Deep Learning"
+      }
+    ]
   }
 ]
